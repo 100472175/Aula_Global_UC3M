@@ -9,7 +9,7 @@
 
 import http.cookiejar as cookielib
 from bs4 import BeautifulSoup as bs
-import cgi
+from email.message import Message 
 import mechanize
 import os
 import getpass
@@ -61,7 +61,9 @@ br.submit(id="submit_ok")
 # Check if success
 url = br.open(BASE_URL)
 login = url.get('X-Frame-Options', None)
-status, _ = cgi.parse_header(login)
+m = Message()
+m['content-type'] = login
+status = m.get_params()[0][0]
 if status.upper() == "DENY":
     print("Login failed. Check your NIA and password and try again")
     exit(1)
@@ -113,8 +115,9 @@ for course in courses:
                 response = br.open(href)
                 cdheader = response.get('Content-Disposition', None)
                 if cdheader is not None:
-                    value, params = cgi.parse_header(cdheader)
-                else:
+                    m = Message()
+                    m['content-type'] = cdheader
+                    params = m.get_params()[1]                else:
                     not_downloaded.append((href, h1))
                     continue
                 file  = os.path.join(path, params["filename"].encode("latin-1").decode("utf-8"))
